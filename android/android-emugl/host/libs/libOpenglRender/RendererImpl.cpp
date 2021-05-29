@@ -24,6 +24,8 @@
 #include "FenceSync.h"
 #include "FrameBuffer.h"
 
+#include "LemvrMain.h"
+
 #include <algorithm>
 #include <utility>
 
@@ -128,6 +130,8 @@ bool RendererImpl::initialize(int width, int height, bool useSubWindow, bool egl
     // for the real threads to start faster.
     mLoaderRenderThread.reset(new RenderThread(nullptr));
     mLoaderRenderThread->start();
+
+    lemvr::lemvrMain();
 
     return true;
 }

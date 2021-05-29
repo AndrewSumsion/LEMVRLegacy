@@ -93,6 +93,7 @@ android_add_library(
       RenderContext.cpp
       RenderControl.cpp
       RendererImpl.cpp
+      LemvrMain.cpp
       RenderLibImpl.cpp
       RenderThread.cpp
       RenderThreadInfo.cpp
@@ -175,6 +176,7 @@ if(NOT LINUX_AARCH64)
         RenderContext.cpp
         RenderControl.cpp
         RendererImpl.cpp
+        LemvrMain.cpp
         RenderLibImpl.cpp
         RenderThread.cpp
         RenderThreadInfo.cpp
