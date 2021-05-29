@@ -46,3 +46,6 @@
 [submodule "roms/u-boot-sam460ex"]
 	path = roms/u-boot-sam460ex
 	url = git://git.qemu.org/u-boot-sam460ex.git
+[submodule "android/android-emugl/host/libs/openvr"]
+	path = android/android-emugl/host/libs/openvr
+	url = https://github.com/ValveSoftware/openvr.git
