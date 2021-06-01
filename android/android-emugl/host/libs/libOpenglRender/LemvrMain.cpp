@@ -34,6 +34,7 @@ LemvrApplication::LemvrApplication()
 
     if(err != vr::VRInitError_None) {
         std::cerr << "Error: " << vr::VR_GetVRInitErrorAsEnglishDescription(err) << std::endl;
+        hmd = NULL;
         error = 1;
         return;
     }
@@ -51,9 +52,11 @@ LemvrApplication::~LemvrApplication() {
 }
 
 void LemvrApplication::submitFrame(GLuint texture) {
-    unsigned int globalTexture = getGlobalTextureName(texture);
+    if(!hmd) {
+        return;
+    }
 
-    std::cout << texture << "\t" << globalTexture << std::endl;
+    unsigned int globalTexture = getGlobalTextureName(texture);
 
     vr::Texture_t vrTexture = {(void*)(uintptr_t)globalTexture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma};
 
