@@ -168,6 +168,8 @@ void RendererImpl::stop(bool wait) {
         c->renderThread()->wait();
     }
     mStoppedChannels.clear();
+
+    lemvr::shutdown();
 }
 
 void RendererImpl::finish() {
