@@ -1,6 +1,8 @@
 prebuilt(ANGLE)
 prebuilt(VULKAN)
 
+
+
 # Adds the proper graphic driver dependencies to the given target.
 function(add_opengl_dependencies TGT)
   # And setup the depedencies
@@ -109,6 +111,30 @@ android_add_library(
   DARWIN NativeSubWindow_cocoa.m
   WINDOWS NativeSubWindow_win32.cpp)
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(PROCESSOR_ARCH "64")
+else()
+  set(PROCESSOR_ARCH "32")
+endif()
+
+if(WIN32)
+  set(PLATFORM_NAME "win")
+elseif(UNIX AND NOT APPLE)
+  set(PLATFORM_NAME "linux")
+elseif(APPLE)
+  set(PLATFORM_NAME "osx")
+endif()
+
+find_library(OPENVR_LIB openvr_api HINTS "${ANDROID_EMUGL_DIR}/host/libs/openvr/lib/${PLATFORM_NAME}${PROCESSOR_ARCH}/" NO_DEFAULT_PATH)
+
+android_license(
+  TARGET ${OPENVR_LIB}
+  LIBNAME "openvr"
+  URL "https://github.com/ValveSoftware/openvr"
+  SPDX "BSD-3-Clause"
+  LICENSE "https://github.com/ValveSoftware/openvr/blob/master/LICENSE"
+  LOCAL "host/libs/openvr/LICENSE")
+
 target_link_libraries(
   OpenglRender
   PUBLIC GLESv1_dec
@@ -119,7 +145,7 @@ target_link_libraries(
          OpenglRender_vulkan
          OpenGLESDispatch
          GLSnapshot
-         openvr_api)
+         ${OPENVR_LIB})
 target_compile_definitions(OpenglRender PRIVATE -DVK_ANDROID_native_buffer)
 android_target_compile_definitions(OpenglRender windows PRIVATE
                                    -DVK_USE_PLATFORM_WIN32_KHR)
@@ -129,7 +155,8 @@ target_link_libraries(OpenglRender PRIVATE emugl_base)
 target_include_directories(
   OpenglRender PUBLIC ${ANDROID_EMUGL_DIR}/host/libs/Translator/include .
                       ${ANDROID_EMUGL_DIR}/host/libs/Translator/EGL
-                      ${ANDROID_EMUGL_DIR}/host/include/OpenglRender)
+                      ${ANDROID_EMUGL_DIR}/host/include/OpenglRender
+                      ${ANDROID_EMUGL_DIR}/host/libs/openvr/headers)
 android_target_link_libraries(OpenglRender linux-x86_64
                               PRIVATE "-WL,--version-script=render_api.entries")
 
