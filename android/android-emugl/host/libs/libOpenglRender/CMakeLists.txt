@@ -119,13 +119,17 @@ endif()
 
 if(WIN32)
   set(PLATFORM_NAME "win")
+  set(OPENVR_SHARED_NAME "openvr_api.dll")
 elseif(UNIX AND NOT APPLE)
   set(PLATFORM_NAME "linux")
+  set(OPENVR_SHARED_NAME "libopenvr_api.so")
 elseif(APPLE)
   set(PLATFORM_NAME "osx")
+  # not sure what to put here, I don't have a mac to test with
 endif()
 
 find_library(OPENVR_LIB openvr_api HINTS "${ANDROID_EMUGL_DIR}/host/libs/openvr/lib/${PLATFORM_NAME}${PROCESSOR_ARCH}/" NO_DEFAULT_PATH)
+set(OPENVR_SHARED "${ANDROID_EMUGL_DIR}/host/libs/openvr/bin/${PLATFORM_NAME}${PROCESSOR_ARCH}/${OPENVR_SHARED_NAME}")
 
 android_license(
   TARGET ${OPENVR_LIB}
@@ -134,6 +138,8 @@ android_license(
   SPDX "BSD-3-Clause"
   LICENSE "https://github.com/ValveSoftware/openvr/blob/master/LICENSE"
   LOCAL "host/libs/openvr/LICENSE")
+
+install(FILES ${OPENVR_SHARED} DESTINATION lib64)
 
 target_link_libraries(
   OpenglRender
