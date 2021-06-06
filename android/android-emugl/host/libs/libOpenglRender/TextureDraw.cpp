@@ -331,8 +331,6 @@ bool TextureDraw::drawImpl(GLuint texture, float rotation,
     s_gles2.glBindTexture(GL_TEXTURE_2D, texture);
     s_gles2.glUniform1i(mTextureSlot, 0);
 
-    lemvr::getVrApp()->submitFrame(texture);
-
     // setup the |translation| uniform value.
     s_gles2.glUniform2f(mTranslationSlot, dx, dy);
 
@@ -458,6 +456,14 @@ bool TextureDraw::drawImpl(GLuint texture, float rotation,
             __FUNCTION__, err);
     }
 #endif
+
+    lemvr::getVrApp()->submitFrame(texture);
+
+    GLenum err = s_gles2.glGetError();
+    if (err != GL_NO_ERROR) {
+        ERR("%s: Could not submitFrame() error=0x%x\n",
+            __FUNCTION__, err);
+    }
 
     // TODO(digit): Restore previous program state.
     // For now, reset back to zero and assume other users will
