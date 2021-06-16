@@ -87,6 +87,8 @@ android_add_library(
       FenceSync.cpp
       FrameBuffer.cpp
       GLESVersionDetector.cpp
+      LemvrMain.cpp
+      LemvrServer.cpp
       PostWorker.cpp
       ReadbackWorker.cpp
       ReadBuffer.cpp
@@ -95,7 +97,6 @@ android_add_library(
       RenderContext.cpp
       RenderControl.cpp
       RendererImpl.cpp
-      LemvrMain.cpp
       TextureCompat.cpp
       RenderLibImpl.cpp
       RenderThread.cpp
@@ -103,6 +104,8 @@ android_add_library(
       RenderWindow.cpp
       RingStream.cpp
       SyncThread.cpp
+      TcpServer.cpp
+      TcpSocket.cpp
       TextureDraw.cpp
       TextureResize.cpp
       WindowSurface.cpp
@@ -202,6 +205,8 @@ if(NOT LINUX_AARCH64)
         FenceSync.cpp
         FrameBuffer.cpp
         GLESVersionDetector.cpp
+        LemvrMain.cpp
+        LemvrServer.cpp
         PostWorker.cpp
         ReadbackWorker.cpp
         ReadBuffer.cpp
@@ -210,7 +215,6 @@ if(NOT LINUX_AARCH64)
         RenderContext.cpp
         RenderControl.cpp
         RendererImpl.cpp
-        LemvrMain.cpp
         TextureCompat.cpp
         RenderLibImpl.cpp
         RenderThread.cpp
@@ -221,6 +225,8 @@ if(NOT LINUX_AARCH64)
         standalone_common/SearchPathsSetup.cpp
         standalone_common/ShaderUtils.cpp
         SyncThread.cpp
+        TcpServer.cpp
+        TcpSocket.cpp
         TextureDraw.cpp
         TextureResize.cpp
         WindowSurface.cpp

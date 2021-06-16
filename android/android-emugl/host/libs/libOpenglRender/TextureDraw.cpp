@@ -16,8 +16,6 @@
 
 #include "DispatchTables.h"
 
-#include "LemvrMain.h"
-
 #include "emugl/common/crash_reporter.h"
 
 #include <string>
@@ -330,8 +328,6 @@ bool TextureDraw::drawImpl(GLuint texture, float rotation,
     s_gles2.glActiveTexture(GL_TEXTURE0);
     s_gles2.glBindTexture(GL_TEXTURE_2D, texture);
     s_gles2.glUniform1i(mTextureSlot, 0);
-
-    lemvr::getVrApp()->submitFrame(texture);
 
     // setup the |translation| uniform value.
     s_gles2.glUniform2f(mTranslationSlot, dx, dy);

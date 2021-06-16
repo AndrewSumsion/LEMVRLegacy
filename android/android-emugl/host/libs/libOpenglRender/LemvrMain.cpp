@@ -1,9 +1,24 @@
+/*
+* Copyright (C) 2021 Andrew Sumsion
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
 #include "LemvrMain.h"
 
 #include "TextureCompat.h"
 
 #include "FrameBuffer.h"
-#include "emugl/common/thread.h"
 #include "GLcommon/GLutils.h"
 
 #include "openvr.h"
@@ -13,9 +28,29 @@
 
 namespace lemvr {
 
+class ServerInitThread : public emugl::Thread {
+public:
+    LemvrServer* server;
+
+    ServerInitThread(LemvrServer* server) : Thread() {
+        this->server = server;
+    }
+
+    virtual intptr_t main() {
+        int err = server->waitForClient();
+        if(err != 0) {
+            std::cerr << "An error occurred waiting for a client to connect: " << err << std::endl;
+            return 1;
+        }
+
+        return 0;
+    }
+};
+
 LemvrApplication::LemvrApplication()
-    : poses(NULL),
-      hmd(NULL),
+    : poses(nullptr),
+      hmd(nullptr),
+      server(nullptr),
       error(0) {
     if(!vr::VR_IsHmdPresent()) {
         std::cerr << "Error: No HMD detected\n";
@@ -39,20 +74,38 @@ LemvrApplication::LemvrApplication()
         return;
     }
 
+    server = new LemvrServer();
+    if(server->startServer(5892) != 0) {
+        std::cerr << "Unable to start server at port 5892" << std::endl;
+        error = 2;
+        return;
+    }
+
+    std::cout << "Waiting for client on another thread..." << std::endl;
+    serverInitThread = new ServerInitThread(server);
+    serverInitThread->start();
+
     poses = new vr::TrackedDevicePose_t[vr::k_unMaxTrackedDeviceCount];
     waitGetPoses();
 }
 
 LemvrApplication::~LemvrApplication() {
     if(hmd) {
-        vr::VR_Shutdown();
         hmd = NULL;
         delete [] poses;
     }
 }
 
+void LemvrApplication::shutdown() {
+    server->stopServer();
+    vr::VR_Shutdown();
+}
+
 void LemvrApplication::submitFrame(GLuint texture) {
     if(!hmd) {
+        return;
+    }
+    if(!server->hasClientConnected()) {
         return;
     }
 
@@ -88,6 +141,13 @@ void LemvrApplication::submitFrame(GLuint texture) {
 
 void LemvrApplication::waitGetPoses() {
     vr::VRCompositor()->WaitGetPoses(poses, vr::k_unMaxTrackedDeviceCount, nullptr, 0);
+    if(!server->hasClientConnected()) {
+        return;
+    }
+    int err = server->mainLoop();
+    if(err != 0) {
+        std::cerr << "An error occured in the server main loop: " << err << std::endl;
+    }
 }
 
 LemvrApplication* vrApp;
@@ -107,6 +167,7 @@ LemvrApplication* getVrApp() {
 }
 
 void shutdown() {
+    vrApp->shutdown();
     delete vrApp;
 }
 

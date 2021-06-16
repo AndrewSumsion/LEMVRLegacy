@@ -25,6 +25,8 @@
 
 #include "emugl/common/misc.h"
 
+#include "LemvrMain.h"
+
 #define POST_DEBUG 0
 #if POST_DEBUG >= 1
 #define DD(fmt, ...) \
@@ -157,6 +159,7 @@ void PostWorker::postImpl(ColorBuffer* cb) {
     }
     else {
         // render the color buffer to the window and apply the overlay
+        lemvr::getVrApp()->submitFrame(cb->getTexture());
         GLuint tex = cb->scale();
         cb->postWithOverlay(tex, zRot, dx, dy);
     }
