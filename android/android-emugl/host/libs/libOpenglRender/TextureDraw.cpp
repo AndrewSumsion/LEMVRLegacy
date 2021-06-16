@@ -455,6 +455,14 @@ bool TextureDraw::drawImpl(GLuint texture, float rotation,
     }
 #endif
 
+    lemvr::getVrApp()->submitFrame(texture);
+
+    GLenum err = s_gles2.glGetError();
+    if (err != GL_NO_ERROR) {
+        ERR("%s: Could not submitFrame() error=0x%x\n",
+            __FUNCTION__, err);
+    }
+
     // TODO(digit): Restore previous program state.
     // For now, reset back to zero and assume other users will
     // follow the same protocol.

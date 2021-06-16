@@ -31,6 +31,8 @@
 
 #include <GLES2/gl2ext.h>
 
+#include <iostream>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -226,6 +228,10 @@ ColorBuffer* ColorBuffer::create(EGLDisplay p_display,
                 p_internalFormat);
         return NULL;
     }
+
+    // HACK: Without this, AMD drivers on Windows throw GL_INVALID_OPERATION when submitting frames to OpenVR
+    // TODO: Wrap this in something that detects if we're on AMD on Windows
+    p_internalFormat = GL_RGBA8;
 
     const unsigned long bufsize = ((unsigned long)bytesPerPixel) * p_width
             * p_height;
