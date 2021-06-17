@@ -129,7 +129,7 @@ int LemvrServer::handlePacket(uint8_t id, uint8_t* buffer) {
     int err = 0;
 
     if(id == 3) {
-        packetGetMetadata(buffer, &err);
+        packetGetMetadata(buffer, err);
     }
 
     delete[] buffer;

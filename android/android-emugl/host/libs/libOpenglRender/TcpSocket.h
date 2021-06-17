@@ -1,5 +1,18 @@
 #pragma once
 
+#ifdef _WIN32
+  #include <winsock2.h>
+  #include <Ws2tcpip.h>
+  #include <BaseTsd.h>
+  typedef SSIZE_T ssize_t;
+#else
+  typedef int SOCKET;
+  #include <sys/socket.h>
+  #include <arpa/inet.h>
+  #include <unistd.h>
+  #include <fcntl.h>
+#endif
+
 #include <cstdint>
 
 namespace lemvr {
@@ -7,28 +20,35 @@ namespace lemvr {
         UNKNOWN = 0,
         OK = 1,
         WOULDBLOCK = 2,
-        ERROR = 3
+        IOERROR = 3
     };
+
+    int socketInit();
+    int socketQuit();
 
     class TcpSocket {
     public:
-        TcpSocket(int socketHandle);
+        TcpSocket(SOCKET socketHandle);
         ~TcpSocket();
 
     public:
-        SocketStatus write(std::uint8_t* buffer, int length, int &bytesWritten);
-        SocketStatus read(std::uint8_t* buffer, int length, int &bytesRead);
-        SocketStatus readAll(std::uint8_t* buffer, int length);
+        SocketStatus write(const std::uint8_t* buffer, int length, int &bytesWritten);
+        SocketStatus read(const std::uint8_t* buffer, int length, int &bytesRead);
+        SocketStatus readAll(const std::uint8_t* buffer, int length);
         SocketStatus setBlocking(bool shouldBlock);
         bool isBlocking() const { return blocking; }
         SocketStatus close();
 
         static SocketStatus errnoToSocketStatus();
 
-        bool isValid() const { return socketHandle > 0; }
+#ifdef _WIN32
+        bool isValid() const { return socketHandle >= 0; }
+#else
+        bool isValid() const { return socketHandle != INVALID_SOCKET; }
+#endif
 
     private:
-        int socketHandle;
+        SOCKET socketHandle;
         bool blocking;
     };
 }

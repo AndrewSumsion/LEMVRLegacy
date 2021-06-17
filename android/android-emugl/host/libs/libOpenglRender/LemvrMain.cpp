@@ -153,6 +153,7 @@ void LemvrApplication::waitGetPoses() {
 LemvrApplication* vrApp;
 
 void lemvrMain() {
+    socketInit();
     vrApp = new LemvrApplication();
 
     if(vrApp->error != 0) {
@@ -169,6 +170,7 @@ LemvrApplication* getVrApp() {
 void shutdown() {
     vrApp->shutdown();
     delete vrApp;
+    socketQuit();
 }
 
 }

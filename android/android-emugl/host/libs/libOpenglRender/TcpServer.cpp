@@ -2,11 +2,6 @@
 
 #include "TcpSocket.h"
 
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 namespace lemvr {
 
 // static
@@ -16,7 +11,7 @@ TcpServer* TcpServer::createServer(int port) {
 
 // static
 TcpServer* TcpServer::createServer(int port, const char* ip) {
-    int serverHandle = socket(AF_INET, SOCK_STREAM, 0);
+    SOCKET serverHandle = socket(AF_INET, SOCK_STREAM, 0);
     if(serverHandle == 0) {
         return nullptr;
     }
@@ -38,7 +33,7 @@ TcpServer* TcpServer::createServer(int port, const char* ip) {
     return new TcpServer(serverHandle, &address, &addrlen);
 }
 
-TcpServer::TcpServer(int socketHandle, void* address, unsigned int* addrlen)
+TcpServer::TcpServer(SOCKET socketHandle, void* address, unsigned int* addrlen)
     : socketHandle(socketHandle),
       address(address),
       addrlen(addrlen) {}
@@ -46,11 +41,21 @@ TcpServer::TcpServer(int socketHandle, void* address, unsigned int* addrlen)
 TcpServer::~TcpServer() {}
 
 namespace {
-    int closeImpl(int handle) {
-        return close(handle);
+    int closeImpl(SOCKET handle) {
+        int status = 0;
+
+        #ifdef _WIN32
+            status = shutdown(handle, SD_BOTH);
+            if (status == 0) { status = closesocket(handle); }
+        #else
+            status = shutdown(handle, SHUT_RDWR);
+            if (status == 0) { status = close(handle); }
+        #endif
+
+        return status;
     }
 
-    int acceptImpl(int handle, struct sockaddr* address, socklen_t* addrlen) {
+    int acceptImpl(SOCKET handle, struct sockaddr* address, socklen_t* addrlen) {
         return accept(handle, address, addrlen);
     }
 } 
@@ -61,7 +66,7 @@ TcpSocket* TcpServer::accept() {
 }
 
 SocketStatus TcpServer::close() {
-    return closeImpl(socketHandle) < 0 ? SocketStatus::ERROR : SocketStatus::OK;
+    return closeImpl(socketHandle) < 0 ? SocketStatus::IOERROR : SocketStatus::OK;
 }
 
 }

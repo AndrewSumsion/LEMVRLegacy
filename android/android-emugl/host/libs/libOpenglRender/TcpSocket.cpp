@@ -1,23 +1,36 @@
 #include "TcpSocket.h"
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <errno.h>
-#include <fcntl.h>
 
 #include <iostream> // TODO: Remove this
 
 namespace lemvr {
 
-TcpSocket::TcpSocket(int socketHandle)
+int socketInit() {
+    #ifdef _WIN32
+        WSADATA wsaData;
+        return WSAStartup(MAKEWORD(2,2), &wsaData);
+    #else
+        return 0;
+    #endif
+}
+
+    int socketQuit() {
+    #ifdef _WIN32
+        return WSACleanup();
+    #else
+        return 0;
+    #endif
+}
+
+TcpSocket::TcpSocket(SOCKET socketHandle)
     : socketHandle(socketHandle),
       blocking(true) {}
 
 TcpSocket::~TcpSocket() {}
 
-SocketStatus TcpSocket::write(std::uint8_t* buffer, int length, int &bytesWritten) {
-    ssize_t sent = send(socketHandle, buffer, (size_t)length, 0);
+SocketStatus TcpSocket::write(const std::uint8_t* buffer, int length, int &bytesWritten) {
+    ssize_t sent = send(socketHandle, (char*)buffer, (size_t)length, 0);
     if(sent < 0) {
         return errnoToSocketStatus();
     }
@@ -25,8 +38,8 @@ SocketStatus TcpSocket::write(std::uint8_t* buffer, int length, int &bytesWritte
     return SocketStatus::OK;
 }
 
-SocketStatus TcpSocket::read(std::uint8_t* buffer, int length, int &bytesRead) {
-    ssize_t received = recv(socketHandle, buffer, length, 0);
+SocketStatus TcpSocket::read(const std::uint8_t* buffer, int length, int &bytesRead) {
+    ssize_t received = recv(socketHandle, (char*)buffer, length, 0);
     if(received < 0) {
         return errnoToSocketStatus();
     }
@@ -37,7 +50,7 @@ SocketStatus TcpSocket::read(std::uint8_t* buffer, int length, int &bytesRead) {
     return SocketStatus::OK;
 }
 
-SocketStatus TcpSocket::readAll(std::uint8_t* buffer, int length) {
+SocketStatus TcpSocket::readAll(const std::uint8_t* buffer, int length) {
     SocketStatus status = SocketStatus::UNKNOWN;
     int totalBytesRead = 0;
     while(totalBytesRead < length) {
@@ -45,21 +58,21 @@ SocketStatus TcpSocket::readAll(std::uint8_t* buffer, int length) {
         status = read(buffer + totalBytesRead, length - totalBytesRead, bytesRead);
         totalBytesRead += bytesRead;
         if(status != SocketStatus::OK && status != SocketStatus::WOULDBLOCK) {
-            return SocketStatus::ERROR;
+            return SocketStatus::IOERROR;
         }
     }
     return SocketStatus::OK;
 }
 
-SocketStatus setBlockingImpl(bool shouldBlock, int socketHandle) {
+SocketStatus setBlockingImpl(bool shouldBlock, SOCKET socketHandle) {
 #ifdef _WIN32
    unsigned long mode = shouldBlock ? 0 : 1;
-   return (ioctlsocket(socketHandle, FIONBIO, &mode) == 0) ? SocketStatus::OK : SocketStatus::ERROR;
+   return (ioctlsocket(socketHandle, FIONBIO, &mode) == 0) ? SocketStatus::OK : SocketStatus::IOERROR;
 #else
    int flags = fcntl(socketHandle, F_GETFL, 0);
-   if (flags == -1) return SocketStatus::ERROR;
+   if (flags == -1) return SocketStatus::IOERROR;
    flags = shouldBlock ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
-   return (fcntl(socketHandle, F_SETFL, flags) == 0) ? SocketStatus::OK : SocketStatus::ERROR;
+   return (fcntl(socketHandle, F_SETFL, flags) == 0) ? SocketStatus::OK : SocketStatus::IOERROR;
 #endif
 }
 
@@ -72,8 +85,18 @@ SocketStatus TcpSocket::setBlocking(bool shouldBlock) {
 }
 
 namespace {
-    int closeImpl(int socketHandle) {
-        return close(socketHandle);
+    int closeImpl(SOCKET handle) {
+        int status = 0;
+
+        #ifdef _WIN32
+            status = shutdown(handle, SD_BOTH);
+            if (status == 0) { status = closesocket(handle); }
+        #else
+            status = shutdown(handle, SHUT_RDWR);
+            if (status == 0) { status = close(handle); }
+        #endif
+
+        return status;
     }
 }
 
@@ -91,7 +114,7 @@ SocketStatus TcpSocket::errnoToSocketStatus() {
         if(errno == EWOULDBLOCK) {
             return SocketStatus::WOULDBLOCK;
         } else {
-            return SocketStatus::ERROR;
+            return SocketStatus::IOERROR;
         }
     } else {
         return SocketStatus::OK;

@@ -142,6 +142,8 @@ android_license(
   LICENSE "https://github.com/ValveSoftware/openvr/blob/master/LICENSE"
   LOCAL "host/libs/openvr/LICENSE")
 
+android_license(TARGET ws2_32 LIBNAME None SPDX None LICENSE None LOCAL None)
+
 install(FILES ${OPENVR_SHARED} DESTINATION lib64)
 
 target_link_libraries(
@@ -155,6 +157,9 @@ target_link_libraries(
          OpenGLESDispatch
          GLSnapshot
          ${OPENVR_LIB})
+if(WIN32)
+  target_link_libraries(OpenglRender PUBLIC ws2_32)
+endif()
 target_compile_definitions(OpenglRender PRIVATE -DVK_ANDROID_native_buffer)
 android_target_compile_definitions(OpenglRender windows PRIVATE
                                    -DVK_USE_PLATFORM_WIN32_KHR)
